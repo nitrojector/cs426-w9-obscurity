@@ -20,13 +20,13 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
-  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+  m_AmbientSkyColor: {r: 0, g: 0.3113209, b: 0.9339623, a: 1}
+  m_AmbientEquatorColor: {r: 0.41509432, g: 0.41509432, b: 0.41509432, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientIntensity: 1.17
+  m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 364669efaa5fc9f4889359c34dac17bb, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -35,7 +35,7 @@ RenderSettings:
   m_DefaultReflectionMode: 0
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 1
-  m_ReflectionIntensity: 1
+  m_ReflectionIntensity: 0.477
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
   m_UseRadianceAmbientProbe: 0
@@ -227,7 +227,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0, z: 0}
-  m_LocalScale: {x: 500, y: 1, z: 500}
+  m_LocalScale: {x: 5.2, y: 1, z: 5.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -300,8 +300,8 @@ Camera:
   m_GameObject: {fileID: 330585543}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.2735849, g: 0.2735849, b: 0.2735849, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -324,7 +324,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 80.4
+  field of view: 80
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -351,7 +351,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 8.66, z: 0}
+  m_LocalPosition: {x: 0, y: 12, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -414,8 +414,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Camera.CameraFollowPosition
   target: {fileID: 749974361}
-  followSpeed: 6
-  useFixedUpdate: 0
+  cameraMode: 0
+  debugToggleModeKey: 3
+  orthographicSize: 10
+  perspectiveFOV: 80
+  mouseSensitivity: 0.1
+  mouseSmoothing: 2
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -557,6 +561,7 @@ GameObject:
   - component: {fileID: 749974358}
   - component: {fileID: 749974363}
   - component: {fileID: 749974362}
+  - component: {fileID: 749974364}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -674,6 +679,7 @@ MonoBehaviour:
   acceleration: 30
   deceleration: 20
   airControl: 0.4
+  movementReference: {fileID: 0}
   jumpForce: 10
   jumpCutMultiplier: 0.4
   fallGravity: 3
@@ -711,6 +717,20 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &749974364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 749974357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecc0f32aea8c401eb0d990e128b419ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerGroundIndicator
+  radius: 0.5
+  color: {r: 1, g: 1, b: 1, a: 0.3}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -768,15 +788,15 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - {fileID: 900000002}
-  - {fileID: 900000003}
+  - component: {fileID: 900000002}
+  - component: {fileID: 900000003}
   m_Layer: 0
   m_Name: MazeGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &900000002
 Transform:
   m_ObjectHideFlags: 0
@@ -808,17 +828,116 @@ MonoBehaviour:
   gridSizePerLevel: 2
   maxGridSize: 35
   totalLevels: 10
-  wallRevealedColor: {r: 0.25, g: 0.27, b: 0.32, a: 1}
-  startColor: {r: 0.2, g: 0.85, b: 0.35, a: 1}
-  goalColor: {r: 1, g: 0.85, b: 0.15, a: 1}
-  ballColor: {r: 0.35, g: 0.55, b: 1, a: 1}
+  wallRevealedColor:
+    r: 0.25
+    g: 0.27
+    b: 0.32
+    a: 1
+  startColor:
+    r: 0.2
+    g: 0.85
+    b: 0.35
+    a: 1
+  goalColor:
+    r: 1
+    g: 0.85
+    b: 0.15
+    a: 1
+  ballColor:
+    r: 0.35
+    g: 0.55
+    b: 1
+    a: 1
   trailTime: 0.38
   trailStartWidth: 0.36
   trailMinVertexDistance: 0.015
   revealHoldSeconds: 2.2
   orthographicPadding: 2.5
-  backgroundColorTop: {r: 0.1, g: 0.08, b: 0.22, a: 1}
-  backgroundColorBottom: {r: 0.02, g: 0.03, b: 0.09, a: 1}
+  backgroundColorTop:
+    r: 0.1
+    g: 0.08
+    b: 0.22
+    a: 1
+  backgroundColorBottom:
+    r: 0.02
+    g: 0.03
+    b: 0.09
+    a: 1
+  levelIndex: 1
+  goalReached: 0
+  allLevelsComplete: 0
+  backgroundTf: {fileID: 0}
+  backgroundSr: {fileID: 0}
+  uiAudio: {fileID: 0}
+  mazeRoot: {fileID: 0}
+  wallsRoot: {fileID: 0}
+  ball: {fileID: 0}
+  ballController: {fileID: 0}
+  startX: 0
+  startZ: 0
+  goalX: 0
+  goalZ: 0
+  shortestPath: 0
+  currentGridSize: 0
+--- !u!1 &1113404262
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1113404265}
+  - component: {fileID: 1113404264}
+  - component: {fileID: 1113404263}
+  m_Layer: 0
+  m_Name: Game
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1113404263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1113404262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b298f5125d9444aa9c471c65252133b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameDirector
+--- !u!114 &1113404264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1113404262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2f419b3ed5445a0b89e0cef34dfd28c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapSetup
+  generateColliders: 1
+  colliderMaterial: {fileID: 0}
+--- !u!4 &1113404265
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1113404262}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.20565, y: 0, z: 1.3881}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -829,3 +948,4 @@ SceneRoots:
   - {fileID: 176371027}
   - {fileID: 749974361}
   - {fileID: 900000002}
+  - {fileID: 1113404265}

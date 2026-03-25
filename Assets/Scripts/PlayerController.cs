@@ -4,138 +4,180 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
-    public static bool EnableJump { get; set; } = false;
-    
-    [Header("Movement")]
-    public float moveSpeed     = 7f;
-    public float acceleration  = 15f;  // how fast we reach moveSpeed
-    public float deceleration  = 20f;  // how fast we stop
-    public float airControl    = 0.4f; // 0 = no air control, 1 = full
+	public static bool EnableJump { get; set; } = false;
 
-    [Header("Jump")]
-    public float jumpForce        = 7f;
-    public float jumpCutMultiplier = 0.4f; // reduces upward velocity on early release
-    public float fallGravity      = 3f;   // extra gravity multiplier when falling
-    public float jumpCoyoteTime   = 0.12f;
-    public float jumpBufferTime   = 0.12f;
+	[Header("Movement")] public float moveSpeed = 7f;
+	public float acceleration = 15f; // how fast we reach moveSpeed
+	public float deceleration = 20f; // how fast we stop
+	public float airControl = 0.4f; // 0 = no air control, 1 = full
 
-    [Header("Ground Check")]
-    public LayerMask groundMask;
-    public float groundCheckRadius = 0.3f;
-    public Transform groundCheck;
+	[Tooltip("Reference used for camera-relative movement. Falls back to Camera.main if empty.")]
+	public Transform movementReference;
 
-    private Rigidbody rb;
-    private InputAction moveAction;
-    private InputAction jumpAction;
+	[Header("Jump")] public float jumpForce = 7f;
+	public float jumpCutMultiplier = 0.4f; // reduces upward velocity on early release
+	public float fallGravity = 3f; // extra gravity multiplier when falling
+	public float jumpCoyoteTime = 0.12f;
+	public float jumpBufferTime = 0.12f;
 
-    private Vector3 currentVelocity; // used by SmoothDamp
-    private bool isGrounded;
-    private bool jumpQueued;
-    private bool jumpHeld;
+	[Header("Ground Check")] public LayerMask groundMask;
+	public float groundCheckRadius = 0.3f;
+	public Transform groundCheck;
 
-    private float coyoteTimer;   // time since last grounded
-    private float jumpBuffer;    // time since jump was pressed
+	private Rigidbody rb;
+	private InputAction moveAction;
+	private InputAction jumpAction;
 
-    void Awake()
-    {
-        rb = GetComponent<Rigidbody>();
-        rb.freezeRotation = true;
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
+	private Vector3 currentVelocity; // used by SmoothDamp
+	private bool isGrounded;
+	private bool jumpQueued;
+	private bool jumpHeld;
 
-        moveAction = InputSystem.actions.FindAction("Move");
-        jumpAction = InputSystem.actions.FindAction("Jump");
+	private float coyoteTimer; // time since last grounded
+	private float jumpBuffer; // time since jump was pressed
 
-        jumpAction.performed += _ => jumpBuffer = jumpBufferTime;
-        jumpAction.canceled  += _ => jumpHeld   = false;
-        jumpAction.started   += _ => jumpHeld   = true;
-        jumpAction.canceled += _ =>
-        {
-            jumpHeld = false;
+	void Awake()
+	{
+		rb = GetComponent<Rigidbody>();
+		rb.freezeRotation = true;
+		rb.interpolation = RigidbodyInterpolation.Interpolate;
 
-            // One-shot cut on release
-            if (rb.linearVelocity.y > 0f)
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x,
-                    rb.linearVelocity.y * jumpCutMultiplier,
-                    rb.linearVelocity.z);
-        };
-    }
+		if (movementReference == null && Camera.main != null)
+			movementReference = Camera.main.transform;
 
-    void OnDestroy()
-    {
-        jumpAction.performed -= _ => jumpBuffer = jumpBufferTime;
-        jumpAction.canceled  -= _ => jumpHeld   = false;
-        jumpAction.started   -= _ => jumpHeld   = true;
-    }
+		moveAction = InputSystem.actions.FindAction("Move");
+		jumpAction = InputSystem.actions.FindAction("Jump");
 
-    void Update()
-    {
-        isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundMask);
+		jumpAction.performed += _ => jumpBuffer = jumpBufferTime;
+		jumpAction.canceled += _ => jumpHeld = false;
+		jumpAction.started += _ => jumpHeld = true;
+		jumpAction.canceled += _ =>
+		{
+			jumpHeld = false;
 
-        // Count down timers
-        coyoteTimer -= Time.deltaTime;
-        jumpBuffer  -= Time.deltaTime;
+			// One-shot cut on release
+			if (rb.linearVelocity.y > 0f)
+				rb.linearVelocity = new Vector3(rb.linearVelocity.x,
+					rb.linearVelocity.y * jumpCutMultiplier,
+					rb.linearVelocity.z);
+		};
+	}
 
-        if (isGrounded)
-            coyoteTimer = jumpCoyoteTime;
+	void OnDestroy()
+	{
+		jumpAction.performed -= _ => jumpBuffer = jumpBufferTime;
+		jumpAction.canceled -= _ => jumpHeld = false;
+		jumpAction.started -= _ => jumpHeld = true;
+	}
 
-        // Jump if buffer is active and coyote time allows
-        if (jumpBuffer > 0f && coyoteTimer > 0f)
-        {
-            jumpQueued   = true;
-            jumpBuffer   = 0f;
-            coyoteTimer  = 0f;
-        }
-    }
+	void Update()
+	{
+		isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundMask);
 
-    void FixedUpdate()
-    {
-        HandleMovement();
-        HandleGravity();
-        HandleJump();
-    }
+		// Count down timers
+		coyoteTimer -= Time.deltaTime;
+		jumpBuffer -= Time.deltaTime;
 
-    void HandleMovement()
-    {
-        Vector2 raw   = moveAction.ReadValue<Vector2>();
-        Vector3 target = new Vector3(raw.x, 0f, raw.y).normalized * moveSpeed;
+		if (isGrounded)
+			coyoteTimer = jumpCoyoteTime;
 
-        // Use different accel/decel rates, reduced in air
-        float control = isGrounded ? 1f : airControl;
-        float rate    = raw.magnitude > 0.01f
-                        ? acceleration * control
-                        : deceleration * control;
+		// Jump if buffer is active and coyote time allows
+		if (jumpBuffer > 0f && coyoteTimer > 0f)
+		{
+			jumpQueued = true;
+			jumpBuffer = 0f;
+			coyoteTimer = 0f;
+		}
+	}
 
-        // Preserve Y velocity — only lerp XZ
-        Vector3 current  = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        Vector3 newXZ    = Vector3.MoveTowards(current, target, rate * Time.fixedDeltaTime);
+	void FixedUpdate()
+	{
+		HandleMovement();
+		HandleGravity();
+		HandleJump();
+	}
 
-        rb.linearVelocity = new Vector3(newXZ.x, rb.linearVelocity.y, newXZ.z);
-    }
+	void HandleMovement()
+	{
+		Vector2 raw = moveAction.ReadValue<Vector2>();
 
-    void HandleGravity()
-    {
-        // Extra downward force when falling for snappier arc
-        if (rb.linearVelocity.y < 0f)
-            rb.AddForce(Vector3.down * fallGravity, ForceMode.Acceleration);
-    }
+		GetGridRelativeBasis(out Vector3 gridForward, out Vector3 gridRight);
+		Vector3 moveDir = (gridRight * raw.x) + (gridForward * raw.y);
+		if (moveDir.sqrMagnitude > 1f)
+			moveDir.Normalize();
 
-    void HandleJump()
-    {
-        if (!jumpQueued) return;
-        
-        if (!EnableJump || !isGrounded && coyoteTimer <= 0f) return;
+		Vector3 target = moveDir * moveSpeed;
 
-        // Clear Y velocity before jump for consistent height
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
+		// Use different accel/decel rates, reduced in air
+		float control = isGrounded ? 1f : airControl;
+		float rate = raw.magnitude > 0.01f
+			? acceleration * control
+			: deceleration * control;
 
-        jumpQueued = false;
-    }
+		// Preserve Y velocity — only lerp XZ
+		Vector3 current = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+		Vector3 newXZ = Vector3.MoveTowards(current, target, rate * Time.fixedDeltaTime);
 
-    void OnDrawGizmosSelected()
-    {
-        if (groundCheck == null) return;
-        Gizmos.color = isGrounded ? Color.green : Color.red;
-        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
-    }
+		rb.linearVelocity = new Vector3(newXZ.x, rb.linearVelocity.y, newXZ.z);
+	}
+
+	private void GetGridRelativeBasis(out Vector3 gridForward, out Vector3 gridRight)
+	{
+		Transform reference = movementReference;
+		if (reference == null && Camera.main != null)
+			reference = Camera.main.transform;
+
+		Vector3 flatForward = reference != null
+			? Vector3.ProjectOnPlane(reference.forward, Vector3.up)
+			: Vector3.forward;
+
+		if (flatForward.sqrMagnitude < 0.0001f)
+			flatForward = Vector3.forward;
+
+		flatForward.Normalize();
+
+		Vector3[] cardinals = { Vector3.forward, Vector3.right, Vector3.back, Vector3.left };
+		float bestDot = float.NegativeInfinity;
+		gridForward = Vector3.forward;
+
+		for (int i = 0; i < cardinals.Length; i++)
+		{
+			float dot = Vector3.Dot(flatForward, cardinals[i]);
+			if (dot > bestDot)
+			{
+				bestDot = dot;
+				gridForward = cardinals[i];
+			}
+		}
+
+		// Rotate snapped forward +90 degrees around Y to get right axis.
+		gridRight = new Vector3(gridForward.z, 0f, -gridForward.x);
+	}
+
+	void HandleGravity()
+	{
+		// Extra downward force when falling for snappier arc
+		if (rb.linearVelocity.y < 0f)
+			rb.AddForce(Vector3.down * fallGravity, ForceMode.Acceleration);
+	}
+
+	void HandleJump()
+	{
+		if (!jumpQueued) return;
+
+		if (!EnableJump || !isGrounded && coyoteTimer <= 0f) return;
+
+		// Clear Y velocity before jump for consistent height
+		rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+		rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
+
+		jumpQueued = false;
+	}
+
+	void OnDrawGizmosSelected()
+	{
+		if (groundCheck == null) return;
+		Gizmos.color = isGrounded ? Color.green : Color.red;
+		Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+	}
 }
