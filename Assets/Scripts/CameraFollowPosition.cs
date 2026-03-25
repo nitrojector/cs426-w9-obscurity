@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Camera
 {
@@ -27,6 +27,14 @@ namespace Camera
         private void Start()
         {
             InitializeOffset();
+        }
+
+        public void SetFollowTarget(Transform newTarget)
+        {
+            target = newTarget;
+            if (target != null)
+                offset = transform.position - target.position;
+            initialized = target != null;
         }
 
         private void ResolveTarget()
