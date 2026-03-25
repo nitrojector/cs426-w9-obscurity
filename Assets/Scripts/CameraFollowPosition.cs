@@ -1,3 +1,4 @@
+﻿using System.Collections;
 using UnityEngine;
 
 namespace Camera
@@ -17,6 +18,11 @@ namespace Camera
         private bool useFixedUpdate = false;
 
         private Vector3 offset;
+        private Vector3 actualOffset;
+
+        private Quaternion rotation;
+        private Quaternion actualRotation;
+        
         private bool initialized;
 
         private void Awake()
@@ -26,7 +32,16 @@ namespace Camera
 
         private void Start()
         {
-            InitializeOffset();
+            InitializeStates();
+            
+            // For testing: change offset after 5 seconds
+            StartCoroutine(TransitionToSideTest());
+        }
+
+        public void SetNewOffset(Vector3 newOffset)
+        {
+            offset = newOffset;
+            rotation = Quaternion.FromToRotation(Vector3.forward, -newOffset.normalized);
         }
 
         public void SetFollowTarget(Transform newTarget)
@@ -48,12 +63,22 @@ namespace Camera
                 Debug.LogWarning($"{nameof(CameraFollowPosition)}: No GameObject tagged 'Player' found.");
         }
 
-        private void InitializeOffset()
+        private void InitializeStates()
         {
             if (target == null) return;
 
             offset = transform.position - target.position;
+            actualOffset = offset;
+            rotation = transform.rotation;
+            actualRotation = rotation;
             initialized = true;
+        }
+
+        private IEnumerator TransitionToSideTest()
+        {
+
+            yield return new WaitForSecondsRealtime(5f);
+            SetNewOffset(new Vector3(0f, 3f, -10f));
         }
 
         private void Update()
@@ -72,7 +97,21 @@ namespace Camera
         {
             if (!initialized || target == null) return;
 
-            Vector3 desiredPosition = target.position + offset;
+            {
+                actualOffset = Vector3.Lerp(
+                    actualOffset,
+                    offset,
+                    1f - Mathf.Exp(-followSpeed * deltaTime)
+                );
+                
+                actualRotation = Quaternion.Slerp(
+                    actualRotation,
+                    rotation,
+                    1f - Mathf.Exp(-followSpeed * deltaTime)
+                );
+            }
+            
+            Vector3 desiredPosition = target.position + actualOffset;
 
             // Position-only smoothing (orientation untouched)
             transform.position = Vector3.Lerp(
